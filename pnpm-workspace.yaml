@@ -1,2 +1,8 @@
 allowBuilds:
   esbuild: true
+skills:
+  dirs:
+    - .agents/skills
+permissions:
+  pixi.js:
+    skills: true
