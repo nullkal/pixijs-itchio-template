@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-and-build:
+    name: 検証と本番ビルド
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: ソースコードを取得
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Node.js と pnpm を準備
+        uses: pnpm/setup@v3
+        with:
+          runtime: node@24
+          cache: true
+          install: false
+
+      - name: 依存関係をインストール
+        run: pnpm install --frozen-lockfile
+
+      - name: 検証と本番ビルド
+        run: pnpm build

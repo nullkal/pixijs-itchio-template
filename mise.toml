@@ -1,0 +1,26 @@
+[tools]
+node = "24"
+
+[settings]
+# pnpm のバージョンは package.json の packageManager を参照すること
+idiomatic_version_file_enable_tools = ["pnpm"]
+
+[tasks.setup]
+description = "開発ツールと依存関係を準備します"
+run = "pnpm install --frozen-lockfile"
+
+[tasks.dev]
+description = "開発サーバーを起動します"
+run = "pnpm dev"
+
+[tasks.check]
+description = "整形・lint・型チェック・単体テストを実行します"
+run = "pnpm check"
+
+[tasks.test]
+description = "単体テストを実行します"
+run = "pnpm test"
+
+[tasks.build]
+description = "検証して本番ビルドを作成します"
+run = "pnpm build"
