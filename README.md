@@ -1,6 +1,7 @@
 # PixiJS itch.io Template
 
-itch.io 向けブラウザーゲームのテンプレートです。ゲーム描画に PixiJS、フォームなどの UI に React・MUI、共有状態に Zustand を使用します。サンプルでは、ゲーム内のボタンから名前入力ダイアログを開き、入力結果をゲーム画面に表示します。
+itch.io 向けブラウザーゲームのテンプレートです。
+ゲーム描画に PixiJS、フォームなどの UI に React・MUI、共有状態に Zustand を使用します。
 
 ## 開発を始める
 
@@ -32,7 +33,9 @@ pnpm dev
 | UI・テーマ・タイトル   | [src/App.tsx](src/App.tsx)、`src/overlay/`                 |
 | ゲームと UI の共有状態 | [src/overlay/overlayStore.ts](src/overlay/overlayStore.ts) |
 
-ゲーム本体は React に依存せず、Zustand のストアを直接利用できます。新しいダイアログは `overlay/name/` を参考に機能別フォルダーへ追加し、`Overlay.tsx` と全体ストアに接続します。React とゲームの起動・終了の接続は `game/Game.tsx` が担当します。
+ゲーム本体は React に依存せず、Zustand のストアを直接利用できます。
+新しいダイアログは `overlay/name/` を参考に機能別フォルダーへ追加し、`Overlay.tsx` と全体ストアに接続します。
+React とゲームの起動・終了の接続は `game/Game.tsx` が担当します。
 
 高解像度ディスプレイでは最大2倍で描画します。画質と負荷を調整する場合は `game/init.ts` の `maxResolution` を変更してください。
 
@@ -48,7 +51,8 @@ import bunnyUrl from "./assets/bunny.png";
 const texture = await Assets.load(bunnyUrl);
 ```
 
-itch.io はサブディレクトリから配信するため、`vite.config.ts` の `base: "./"` を維持してください。実行時の素材 URL に `/assets/...` のようなドメイン直下のパスを使わないでください。
+itch.io はサブディレクトリから配信するため、`vite.config.ts` の `base: "./"` を維持してください。
+実行時の素材 URL に `/assets/...` のようなドメイン直下のパスを使わないでください。
 
 ## コマンド
 
@@ -81,5 +85,3 @@ pnpm deploy USER/GAME:html5
 初回は itch.io の編集画面でプロジェクトを HTML ゲームに設定し、アップロードしたファイルをブラウザーでプレイする対象に指定してください。チャンネル名を `html5` にするだけでは設定されません。詳しくは [Butler の公開ガイド](https://itch.io/docs/butler/pushing.html)を参照してください。
 
 公開後は itch.io 上でもゲームの起動と素材の読み込みを確認してください。
-
-作業方針・コーディング規約・PR の作り方は [AGENTS.md](AGENTS.md) にまとめています。
