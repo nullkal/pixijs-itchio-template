@@ -9,7 +9,7 @@ export default mergeConfig(
       environment: "node",
       include: ["src/**/*.test.ts"],
       globals: false,
-      // ゲームロジックのテストを追加するまでは、テスト0件を許可する。
+      // テンプレートではテスト0件を許可する。
       passWithNoTests: true,
       unstubEnvs: true,
     },
