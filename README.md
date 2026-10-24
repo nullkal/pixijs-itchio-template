@@ -65,12 +65,6 @@ itch.io はサブディレクトリから配信するため、`vite.config.ts` �
 
 描画を変更したらブラウザーで起動・操作・リサイズ・モバイルの縦横表示を確認してください。GitHub Actions も `pnpm build` を実行しますが、表示確認と itch.io への公開は行いません。
 
-## 単体テスト
-
-Vitest の Node 環境を用意していますが、テンプレートにテストは含めていません。ゲームロジックのテストを追加したら、[vitest.config.ts](vitest.config.ts) の `passWithNoTests` を削除してください。
-
-テストは対象モジュールの隣に `*.test.ts` として置き、テスト名は日本語で記述します。`describe`・`it`・`expect` は `vitest` から明示的にインポートしてください。`pnpm test` で全件、`pnpm test src/score.test.ts` のように指定すると個別に実行できます。
-
 ## itch.io への公開
 
 1. [Butler](https://itch.io/docs/butler/installing.html) を別途インストールします（mise のセットアップには含みません）。
@@ -87,11 +81,5 @@ pnpm deploy USER/GAME:html5
 初回は itch.io の編集画面でプロジェクトを HTML ゲームに設定し、アップロードしたファイルをブラウザーでプレイする対象に指定してください。チャンネル名を `html5` にするだけでは設定されません。詳しくは [Butler の公開ガイド](https://itch.io/docs/butler/pushing.html)を参照してください。
 
 公開後は itch.io 上でもゲームの起動と素材の読み込みを確認してください。
-
-## 開発支援・保守
-
-- **Agent Skills**：PixiJS の Skills は許可済みで、`pnpm install` 時に `.agents/skills/` へリンクされます。承認状態は `pnpm permissions list`、設定は [pnpm-workspace.yaml](pnpm-workspace.yaml) を参照してください。
-- **依存関係の更新**：Dependabot が更新 PR を作成します。TypeScript は typescript-eslint との互換性のため6系に固定し、メジャー更新を除外しています。
-- **pnpm 12 の制限**：2026年10月25日時点では、この形式のロックファイルは GitHub の依存関係グラフに未対応で、通常の更新 PR は作られても脆弱性アラート・セキュリティ更新は生成されません。[GitHub の告知](https://github.blog/changelog/2026-10-20-dependabot-now-supports-npm-12-pnpm-11-and-12-and-bun-1-4/)を参照してください。
 
 作業方針・コーディング規約・PR の作り方は [AGENTS.md](AGENTS.md) にまとめています。
