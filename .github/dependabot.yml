@@ -4,6 +4,11 @@ updates:
   # pnpm も npm エコシステムとして指定する。
   - package-ecosystem: npm
     directory: /
+    # typescript-eslint との互換性を保つため TypeScript は6系を使用する。
+    ignore:
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major
     schedule:
       interval: weekly
       day: monday
