@@ -13,6 +13,9 @@ dist-ssr
 *.local
 mise.local.toml
 
+# pnpm が生成する Agent Skills のリンク
+.agents/skills/pnpm-*
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

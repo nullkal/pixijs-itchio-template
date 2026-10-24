@@ -141,6 +141,29 @@ E2E テストやカバレッジ基準は未導入です。単体テストは `pn
 
 GitHub にファイルを push すると、Actions タブで結果を確認できます。手動実行は、このワークフローを既定のブランチに追加した後、Actions タブの「CI」から行います。CI は検証のみで、itch.io へのアップロードは行いません。
 
+## Agent Skills
+
+pnpm 標準の Agent Skills 機能を使用します。`pnpm-workspace.yaml` の `skills.dirs` でリンク先を `.agents/skills` に固定し、パッケージごとの `permissions` で有効化します。PixiJS の Skills は許可済みです。
+
+```sh
+pnpm install --frozen-lockfile # 許可済み Skills のリンクを生成・同期
+pnpm permissions list         # 許可状態と承認待ちを確認
+```
+
+`mise run setup` でも同じ同期を行います。生成される `pnpm-*` リンクは `node_modules` を参照するため、Git 管理対象外です。自作の Skills は別名のディレクトリに置けます。
+
+Skills を追加するには、`skills/<名前>/SKILL.md` を含むパッケージを直接の依存関係に追加してください。開発支援専用なら `pnpm add -D パッケージ名` を使います。内容を確認したうえで `pnpm approve` を実行するか、次のように `pnpm-workspace.yaml` の既存の `permissions` に Skills の許可を追加し、再度インストールしてください。
+
+```yaml
+permissions:
+  パッケージ名:
+    skills: true
+```
+
+`pnpm approve` はビルドスクリプトの許可も扱います。Skills だけを許可する場合は上記の設定を使ってください。許可はそのパッケージの全 Skills と今後のバージョンに適用されます。`package.json`・`pnpm-lock.yaml`・`pnpm-workspace.yaml` の変更を共有することで、他の環境でも再現できます。
+
+この機能は npm パッケージに同梱された Skills が対象です。詳細は [pnpm の公式ドキュメント](https://github.com/pnpm/pnpm/blob/main/pnpm/docs/agent-skills.md)を参照してください。
+
 ## 依存関係の自動更新
 
 `.github/dependabot.yml` で pnpm の依存パッケージと GitHub Actions の更新を確認します。毎週月曜日の日本時間 09:00 に確認する設定で、マイナー・パッチ更新はエコシステムごとにまとめ、メジャー更新は個別の PR として提案します。各エコシステムの通常更新 PR は最大5件です。
