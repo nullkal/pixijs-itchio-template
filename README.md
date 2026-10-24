@@ -1,8 +1,8 @@
 # PixiJS itch.io Template
 
-PixiJS・TypeScript・Vite を使って、itch.io で公開するブラウザーゲームを開発するためのプロジェクトです。このリポジトリをコピーして、ゲームの実装を進められます。
+PixiJS・React・MUI・Zustand・TypeScript・Vite を使って、itch.io で公開するブラウザーゲームを開発するためのプロジェクトです。このリポジトリをコピーして、ゲームの実装を進められます。
 
-キャンバスは表示領域いっぱいに広がり、ウィンドウのリサイズや画面回転に追従します。itch.io の埋め込みでは、埋め込み枠のサイズに合わせて表示します。
+キャンバスは表示領域いっぱいに広がり、ウィンドウのリサイズや画面回転に追従します。itch.io の埋め込みでは、埋め込み枠のサイズに合わせて表示します。高解像度ディスプレイでは DPR（devicePixelRatio）に合わせ、最大2倍の解像度で描画します。
 
 ## 開発を始める
 
@@ -43,18 +43,26 @@ pnpm dev
 
 開発サーバーが起動し、ブラウザーが開きます。既定の URL は `http://localhost:8080` です。ポートが使用中の場合は、ターミナルに表示される URL を確認してください。
 
-コピーして開発を始める際は、`package.json` の `name` と `index.html` のタイトルをゲームに合わせて変更してください。`src/main.ts` のウサギが回転する処理を起点に、ゲームを実装できます。
+コピーして開発を始める際は、`package.json` の `name` と `src/App.tsx` の `<title>`をゲームに合わせて変更してください。`src/game/init.ts` のウサギが回転する処理を起点に、ゲームを実装できます。
 
 ## ディレクトリ構成
 
 ```text
 src/
-  main.ts          # PixiJS の初期化とゲームの起動
-  assets/          # import して使用する画像などのゲーム素材
+  main.tsx         # React のルートを起動
+  App.tsx          # Game と Overlay の配置、共有ストア・テーマ・全体スタイル
+  game/
+    Game.tsx       # 表示先とゲームの起動・終了を React に接続
+    init.ts        # PixiJS の初期化・描画・後片付け（React 非依存）
+    assets/        # import して使用する画像などのゲーム素材
+  overlay/
+    Overlay.tsx    # オーバーレイの配置と機能の組み合わせ
+    overlayStore.ts # 全体の開閉・各機能のストアの参照
+    name/
+      NameDialog.tsx # 名前入力ダイアログ
+      nameStore.ts # 入力途中の名前・確定名・入力検証
   vite-env.d.ts    # Vite の型定義
-public/
-  style.css        # 全画面表示用のスタイル
-index.html         # ゲームの HTML
+index.html         # メタ情報、React の root、エントリーポイント
 vite.config.ts     # 開発サーバーとビルドの設定
 vitest.config.ts   # Node 環境の単体テスト設定
 mise.toml          # 開発ツールとタスクの設定
@@ -62,11 +70,67 @@ mise.toml          # 開発ツールとタスクの設定
 dist/              # ビルド時に生成される公開用ファイル
 ```
 
-ゲームロジックは役割ごとに `src/` 内へ分割してください。`dist/` は直接編集しません。`index.html` の `#game-container` は CSS・TypeScript の参照と一致させてください。
+ゲームロジックは役割ごとに `src/` 内へ分割してください。`dist/` は直接編集しません。`index.html` の `#root` は `App.tsx` の全体スタイル・`src/main.tsx` の参照と一致させてください。
+
+## ゲームと React UI の連携
+
+サンプルは、PixiJS と React の間で状態をやり取りする流れを示します。
+
+1. ゲーム画面の「名前を教える」ボタンをクリック・タップします。ボタンは PixiJS の Container・Graphics・Text で描画しています。
+2. React・MUI の名前入力ダイアログが開き、ウサギの回転とゲームボタンの操作が止まります。
+3. 名前を入力して「決定」を押すと、PixiJS の Text に「こんにちは、○○さん！」と表示されます。
+4. 再度開くと確定済みの名前が入力されています。Escape・背景クリックで閉じた場合は名前を変更しません。
+
+名前は前後の空白を除いて1〜20文字（Unicode コードポイント数）です。空欄や長すぎる名前ではエラーを表示し、ダイアログを閉じません。日本語入力中の変換確定 Enter では送信しません。名前はメモリー内だけに保持し、ページ再読み込みで初期化します。
+
+React の `App` が `Game` と `Overlay` を子として配置します。`Game` は表示先とゲームの起動・終了を接続し、`Overlay` は機能ごとの UI を配置します。名前入力の UI と状態は `overlay/name/` にまとめています。`NameDialog` は名前ストアと `open`・`onConfirm`・`onClose` を受け取り、全体ストアには依存しません。全体ストアとの接続は `overlay/Overlay.tsx` が担当します。
+
+`App` が作成する全体ストア（`overlay/overlayStore.ts`）は `activeDialog` と開閉操作を持ち、`name` から名前専用ストアを参照できます。どちらも Zustand の vanilla store で、React・MUI に依存しません。
+
+```ts
+// game/init.ts から、全体ストアを直接利用する。
+store.getState().openName();
+const unsubscribe = store.subscribe((state) => {
+  if (state.activeDialog === null) {
+    const name = state.name.getState().name;
+    // 確定した名前を使い、PixiJS の挨拶表示を更新する。
+  }
+});
+
+// ゲーム終了時に購読を解除する。
+unsubscribe();
+```
+
+全体ストア（`store.getState()`）の操作:
+
+- `openName()` は確定名を下書きにコピーして名前入力を開きます。すでに開いている場合は何もしません。
+- `confirmName()` は名前を検証し、成功した場合だけ確定して閉じます。ゲーム側は全体ストアの変更通知から確定名を取得できます。
+- `close()` は下書きを破棄して閉じます。確定名は変更しません。
+- `reset()` は画面を閉じ、名前も初期化します。`App` のアンマウント時に呼び出します。
+
+名前ストア（`store.getState().name`）は、確定値 `name`、入力途中の `draft`、検証エラー `error` を持ちます。React は `useStore` でこれらを購読し、入力時に `setDraft()` を呼びます。`prepare()`・`confirm()`・`reset()` は全体ストアから呼ぶ操作です。名前の入力中は全体ストアに通知されず、ゲームの挨拶は確定して閉じたタイミングで更新されます。
+
+設定画面などを追加する場合は `src/overlay/settings/` のように機能別フォルダーを作り、UI・ストア・テストをまとめます。全体ストアにそのストアの参照と開閉操作を追加し、`Overlay` にコンポーネントを配置します。現在は `activeDialog` で1つの画面を選ぶ構成です。
+
+`Game` は Effect 内で `init(container, store)` を呼び、クリーンアップで返り値の `destroy()` を呼びます。`ready` は非同期の起動完了を表す Promise で、失敗時は reject されます。`Game` はこれを受けてエラーを表示します。アンマウント後のエラーは画面に反映しません。
+
+`src/game/init.ts` は React・MUI に依存せず、PixiJS と Zustand を直接利用します。初期化、ゲームループ、ボタン、挨拶表示、Canvas・ResizeObserver・購読の後片付けをここにまとめています。`destroy()` は初期化中でも呼び出せて、複数回呼んでも安全です。素材の共有テクスチャは再利用のために保持します。開発時の Strict Mode による再起動にも、この終了処理で対応します。
+
+座標や速度など毎フレーム変わる値はゲーム側で管理します。ダイアログ表示中は回転とボタン操作を止め、描画とリサイズは継続します。Canvas 内の配置はウィンドウの大きさに追従し、挨拶は画面幅に合わせて折り返します。
+
+スタイルは MUI にまとめています。`App.tsx` のテーマで色とフォント、`CssBaseline` で基本スタイル、`GlobalStyles` でページ全体のサイズとスクロールを設定します。`Game` と `Overlay` の配置は `Box` の `sx` に置きます。`Overlay` の空白部分はポインター操作を Canvas に通し、ダイアログが操作を受け取ります。外部フォント配信への依存はありません。
+
+`index.html` は言語・文字コード・viewport と React の起動だけを定義します。タイトルは `App.tsx` の `<title>` で管理し、React が `<head>` に反映します。エントリーの `/src/main.tsx` は Vite がビルド時に処理し、`base: "./"` に従う相対パスへ変換します。
+
+## 高解像度ディスプレイ
+
+`src/game/init.ts` の `resolution` と `autoDensity` により、ゲーム内の座標や表示サイズを変えずに Canvas の内部解像度を上げます。描画負荷を抑えるため、`maxResolution` で最大2倍に制限しています。必要に応じてこの値を変更してください。
+
+DPR の変化はメディアクエリーで監視し、異なるモニターへの移動やブラウザーのズーム時に描画解像度を更新します。ゲーム終了時には監視を解除します。PixiJS の Text は描画解像度の変更に追従しますが、画像素材の精細さは元画像の解像度にも依存します。
 
 ## 素材の読み込み
 
-素材を `src/assets/` に配置し、import で URL を取得して PixiJS に渡します。次は `src/main.ts` から画像を読み込む例です。
+素材を `src/game/assets/` に配置し、import で URL を取得して PixiJS に渡します。次は `src/game/init.ts` から画像を読み込む例です。
 
 ```ts
 import { Assets } from "pixi.js";
@@ -111,13 +175,13 @@ pnpm build
 pnpm exec vite preview
 ```
 
-ブラウザーで素材の読み込み、ゲームの起動、リサイズ、モバイルの縦横表示、不要なスクロールの有無を確認してください。プレビューサーバーはローカル確認用です。
+ブラウザーで素材の読み込み、ゲームの起動、リサイズ、モバイルの縦横表示、不要なスクロールの有無を確認してください。高解像度ディスプレイでは、文字や図形の鮮明さと、モニター移動・ブラウザーのズーム後も表示サイズやクリック位置がずれないことを確認してください。プレビューサーバーはローカル確認用です。
 
 ## 単体テスト
 
 Vitest を Node 環境で使用します。テストファイルは対象モジュールの隣に `*.test.ts` として配置してください。例えば `src/score.ts` のテストは `src/score.test.ts` に書きます。
 
-`describe`・`it`・`expect` などは `vitest` から明示的にインポートし、テスト名は日本語で期待する動作を記述してください。現在はテストファイルがありません。Vitest はテスト0件でも成功する設定です。ゲームロジックのテストを追加したら、`vitest.config.ts` の `passWithNoTests` を削除してください。
+`describe`・`it`・`expect` などは `vitest` から明示的にインポートし、テスト名は日本語で期待する動作を記述してください。現在はテストファイルを含まず、テスト0件でも成功する設定です。ゲームロジックのテストを追加したら、`vitest.config.ts` の `passWithNoTests` を削除してください。ゲームの描画や起動・終了はブラウザーで確認してください。
 
 ```sh
 pnpm test                    # 全単体テストを1回実行
@@ -126,7 +190,7 @@ pnpm test:watch              # 開発中の変更を監視
 pnpm test src/score.test.ts  # ファイルを指定して実行
 ```
 
-スコア計算、当たり判定、状態遷移などは、描画やブラウザー API に依存しない関数・クラスへ分離するとテストしやすくなります。起動処理を含む `src/main.ts` はテストから読み込まず、対象のロジックだけをインポートしてください。
+スコア計算、当たり判定、状態遷移などは、描画やブラウザー API に依存しない関数・クラスへ分離するとテストしやすくなります。起動処理を含む `src/main.tsx` はテストから読み込まず、対象のロジックだけをインポートしてください。
 
 E2E テストやカバレッジ基準は未導入です。単体テストは `pnpm check` と `pnpm build` に含まれます。
 
